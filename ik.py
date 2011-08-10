@@ -2,8 +2,11 @@
 import math
 
 class Ik:
+    '''Adapted from http://forums.trossenrobotics.com/tutorials/introduction-129/delta-robot-kinematics-3276/'''
+
     def __init__(self, e = 75, f = 62, re = 155, rf = 88):
-        '''http://forums.trossenrobotics.com/tutorials/introduction-129/delta-robot-kinematics-3276/'''
+        self.maxangle = 90
+        self.minangle = -75
         self.e = e
         self.f = f
         self.re = re
@@ -16,6 +19,7 @@ class Ik:
         self.tan30 = 1.0 / self.sqrt3
 
     def calcAngleYZ(self, x0, y0, z0):
+        '''internal helper function'''
         y1 = -0.5 * 0.57735 * self.f
         y0 = y0 - 0.5 * 0.57735 * self.e
 
@@ -38,7 +42,9 @@ class Ik:
         theta = 180.0 * math.atan(-zj / (y1 - yj)) / math.pi + magic
         return theta
 
-    def calcInverse(self, x0, y0, z0):
+    def calcInverse(self, coords):
+        '''coords to angles'''
+        x0, y0, z0 = coords
         theta1 = theta2 = theta3 = 0
         theta1 = self.calcAngleYZ(x0, y0, z0)
         if (theta1):
@@ -46,11 +52,23 @@ class Ik:
         if (theta2):
             theta3 = self.calcAngleYZ(x0 * self.cos120 - y0 * self.sin120, y0 * self.cos120 + x0 * self.sin120, z0)
         if (theta3):
-            return (theta1, theta2, theta3)
+            return self.applyLimits([theta1, theta2, theta3])
         else:
             return False
 
-    def calcForward(self, theta1, theta2, theta3):
+    def applyLimits(self, angles):
+        for i in range(len(angles)):
+            if (angles[i] < self.minangle):
+                angles[i] = self.minangle
+                print "servo min angle out of range"
+            if (angles[i] > self.maxangle):
+                angles[i] = self.maxangle
+                print "servo max angle out of range"
+        return angles
+
+    def calcForward(self, angles):
+        '''angles to coords'''
+        theta1, theta2, theta3 = angles
         t = (self.f - self.e) * self.tan30 / 2.0
         dtr = math.pi / 180.0
         theta1 = theta1 * dtr
@@ -92,4 +110,9 @@ class Ik:
         z0 = -0.5 * (b + math.sqrt(d)) / a
         x0 = (a1 * z0 + b1) / dnm
         y0 = (a2 * z0 + b2) / dnm
-        return (x0, y0, z0)
+        return ([x0, y0, z0])
+
+if __name__ == '__main__':
+    ik = Ik()
+    for x in range(-12, 12):
+        print x, x, ik.calcInverse([x, x, -120])

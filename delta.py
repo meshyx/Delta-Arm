@@ -17,11 +17,16 @@ s3 = servo.Servo(ser, 3, 800, 1495, 2375, True)
 ik = ik.Ik()
 pp = pathplanner.PathPlanner()
 
-def moveto(x, y, z):
-    path = pp.plan((x, y, z), 0.5)
+def moveto(target):
+    '''moves the arm to a target coordinate'''
+    pathresolution = 10
+    path = pp.plan(target, pathresolution)
+    anglesbuffer = []
     for coords in path:
         coords = warpadjust(coords)
-        angles = ik.calcInverse(coords[0], coords[1], coords[2])
+        angles = ik.calcInverse(coords)
+        anglesbuffer.append(angles)
+    for angles in anglesbuffer:
         if angles:
             s1.movea(angles[0])
             s2.movea(angles[1])
@@ -29,50 +34,52 @@ def moveto(x, y, z):
             #time.sleep(max(s1.diff, s2.diff, s3.diff) / 2000.0)
 
 def warpadjust(coords):
+    '''adjusts a target coordinate for known warpage of surface'''
     factor = 0.18
     distance = math.sqrt(coords[0] * coords[0] + coords[1] * coords[1])
-    return (coords[0], coords[1], coords[2] + (distance * factor))
+    return ([coords[0], coords[1], coords[2] + (distance * factor)])
 
-def demo5():
+def democircle():
     i = 0.0
-    size = 40
-    steps = 10
-    x = 30
-    y = 30
-    z = -44
+    size = 100
+    steps = 150
+    x = 0
+    y = 0
+    z = 0
     while (i < 2 * math.pi * 1.00001):
         i += math.pi / steps
-        moveto(math.sin(i) * size + x, math.cos(i) * size + y, -134.0 + z)
+        moveto([math.sin(i) * size + x, math.cos(i) * size + y, -134.0 + z])
 
 def demo6():
-    for i in range(-80, 80, 1):
-        moveto(i, i, -134.0 - 45)
+    for i in range(-40, 70, 3):
+        moveto([0, 0, -134.0 + i])
     time.sleep(1)
 
-def demo7():
-    for x in range(-90, 91, 10):
-        for z in range(-114, -170, -1):
-            moveaw(ik.calcInverse(x, 0, z))
-
-def demo8():
+def demobox():
     sleepy = 0.5
-    table = 41
-    moveto(0, 0, -137 - table)
+    table = -1
+    size = 60
+    moveto([0, 0, -137 - table])
     time.sleep(sleepy)
-    moveto(0, 0, -137 - table)
+    moveto([size, size, -137 - table])
     time.sleep(sleepy)
-    moveto(60, 60, -137 - table)
+    moveto([-size, size, -137 - table])
     time.sleep(sleepy)
-    moveto(-60, 60, -137 - table)
+    moveto([-size, -size, -137 - table])
     time.sleep(sleepy)
-    moveto(60, -60, -137 - table)
+    moveto([size, -size, -137 - table])
     time.sleep(sleepy)
-    moveto(-60, -60, -137 - table)
+    moveto([size, size, -137 - table])
     time.sleep(sleepy)
-    moveto(0, 0, -137 - table)
+    moveto([0, 0, -137 - table])
     time.sleep(sleepy)
 
-demo8()
+def demo9():
+    sleepy = 2
+    moveto([0, 0, -137 + 70])
+    time.sleep(sleepy)
+
+democircle()
 #time.sleep(1)
 ser.close()
 
