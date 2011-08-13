@@ -42,10 +42,13 @@ class Servo:
         self.movems(self.minms + (self.maxms - self.minms) / 100 * pct)
 
     def movea(self, theta):
-        '''moves servo to location denoted by angle from -90 to 90,
+        '''moves servo to location denoted by angle,
         with 0 being the previously defined center. Angles will only
         be correct if endpoints are correctly set.'''
+        posendpoint = 58
+        negendpoint = 65
+
         if (theta >= 0):
-            self.movems(int(self.centerms + ((self.maxms - self.centerms) / 90 * theta)))
+            self.movems(int(self.centerms + ((self.maxms - self.centerms) / posendpoint * theta)))
         else:
-            self.movems(int(self.centerms + ((self.centerms - self.minms) / 90 * theta)))
+            self.movems(int(self.centerms + ((self.centerms - self.minms) / negendpoint * theta)))

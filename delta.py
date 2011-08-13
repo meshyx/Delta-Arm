@@ -21,11 +21,10 @@ fig = figure.Figure()
 
 def moveto(target):
     '''moves the arm to a target coordinate'''
-    pathresolution = 10
+    pathresolution = 1
     path = pp.plan(target, pathresolution)
     anglesbuffer = []
     for coords in path:
-        coords = warpadjust(coords)
         angles = ik.calcInverse(coords)
         anglesbuffer.append(angles)
     for angles in anglesbuffer:
@@ -33,63 +32,89 @@ def moveto(target):
             s1.movea(angles[0])
             s2.movea(angles[1])
             s3.movea(angles[2])
-            #time.sleep(max(s1.diff, s2.diff, s3.diff) / 1000.0)
+            time.sleep(max(s1.diff, s2.diff, s3.diff) / 3000.0)
 
-def warpadjust(coords):
-    '''adjusts a target coordinate for known warpage of surface'''
-    factor = 0.18
-    distance = math.sqrt(coords[0] * coords[0] + coords[1] * coords[1])
-    return ([coords[0], coords[1], coords[2] + (distance * factor)])
-
-def drawfig(fig, table):
+def drawfig(fig):
+    table = -172
     lift = 20
+    pathresolution = 1
     lines = fig.lines
-
-    moveto([lines[0][0], lines[0][1], table + lift])
+    targets = []
+    paths = []
+    anglesbuffer = []
+    
+    targets.append([lines[0][0], lines[0][1], table + lift])
 
     for i in range(len(lines) - 1):
-        moveto([lines[i][0], lines[i][1], table])
-        moveto([lines[i][2], lines[i][3], table])
+        targets.append([lines[i][0], lines[i][1], table])
+        targets.append([lines[i][2], lines[i][3], table])
 
         if lines[i + 1][0] != lines[i][2] or lines[i + 1][1] != lines[i][3]:
-            moveto([lines[i][2], lines[i][3], table + lift])
-            moveto([lines[i + 1][0], lines[i + 1][1], table + lift])
+            targets.append([lines[i][2], lines[i][3], table + lift])
+            targets.append([lines[i + 1][0], lines[i + 1][1], table + lift])
 
-    moveto([lines[len(lines) - 1][0], lines[len(lines) - 1][1], table])
-    moveto([lines[len(lines) - 1][2], lines[len(lines) - 1][3], table])
+    targets.append([lines[len(lines) - 1][0], lines[len(lines) - 1][1], table])
+    targets.append([lines[len(lines) - 1][2], lines[len(lines) - 1][3], table])
 
-    moveto([lines[len(lines) - 1][2], lines[len(lines) - 1][3], table + lift * 2])
-    time.sleep(0.2)
+    targets.append([lines[len(lines) - 1][2], lines[len(lines) - 1][3], table + lift * 2])
+
+    for target in targets:
+        paths.append(pp.plan(target, pathresolution))
+    for path in paths:
+        for coords in path:
+            angles = ik.calcInverse(coords)
+            anglesbuffer.append(angles)
+    for angles in anglesbuffer:
+        if angles:
+            s1.movea(angles[0])
+            s2.movea(angles[1])
+            s3.movea(angles[2])
+            time.sleep(max(s1.diff, s2.diff, s3.diff) / 2000.0)
+        else:
+            print "invalid angle"
     
 def demobox():
-    fig.addbox(-80, -80, 80, 80)
-    drawfig(fig, -200)
+    fig.addbox(-20, -20, 20, 20)
+    drawfig(fig)
 
 def democircle():
-    fig.addcircle(0, 0, 80, 40)
-    drawfig(fig, -200)
+    for i in range(0, 61, 5):
+        fig.addcircle(0, 0, i, 100)
+    drawfig(fig)
 
 def demospiral():
-    fig.addspiral(0, 0, 80, 100, 4)
-    drawfig(fig, -200)
+    fig.addspiral(0, 0, 40, 400, 8)
+    drawfig(fig)
 
 def demogrid():
-    size = 80
-    step = 40
-    for i in range(-size, size + 1, step):
-        fig.addline(-size, i, size, i)
-    for i in range(-size, size + 1, step):
-        fig.addline(i, -size, i, size)
+    size = 60
+    steps = 8
+    xofs = -20
+    yofs = -20
+    for i in range(-size/2, size/2 + 1, size/steps):
+        fig.addline(-size/2+xofs, i+yofs, size/2+xofs, i+yofs)
+    for i in range(-size/2, size/2 + 1, size/steps):
+        fig.addline(i+xofs, -size/2+yofs, i+xofs, size/2+yofs)
+    drawfig(fig)
 
-    drawfig(fig, -200)
+def setup1():
+    s3.movea(90)
+    time.sleep(10)
 
-
-demogrid()
-fig.clear()
-democircle()
-fig.clear()
-demospiral()
-ser.close()
+try:
+    #setup1()
+    demogrid()
+    #fig.clear()
+    #demobox()
+    #fig.clear()
+    #democircle()
+    #fig.clear()
+    #demospiral()
+    ser.close()
+except:
+    ser.close()
+    print "ser closed"
+    raise
 
 
 
