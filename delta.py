@@ -21,7 +21,7 @@ fig = figure.Figure()
 
 def moveto(target):
     '''moves the arm to a target coordinate'''
-    pathresolution = 1
+    pathresolution = 2
     path = pp.plan(target, pathresolution)
     anglesbuffer = []
     for coords in path:
@@ -35,9 +35,9 @@ def moveto(target):
             time.sleep(max(s1.diff, s2.diff, s3.diff) / 3000.0)
 
 def drawfig(fig):
-    table = -172
-    lift = 20
-    pathresolution = 1
+    table = -163
+    lift = 10
+    pathresolution = 0.5
     lines = fig.lines
     targets = []
     paths = []
@@ -78,19 +78,19 @@ def demobox():
     drawfig(fig)
 
 def democircle():
-    for i in range(0, 61, 5):
-        fig.addcircle(0, 0, i, 100)
+    for i in range(10, 41, 10):
+        fig.addcircle(0, 0, i, 40)
     drawfig(fig)
 
 def demospiral():
-    fig.addspiral(0, 0, 40, 400, 8)
+    fig.addspiral(0, 0, 60, 100, 4)
     drawfig(fig)
 
 def demogrid():
     size = 60
-    steps = 8
-    xofs = -20
-    yofs = -20
+    steps = 4
+    xofs = 0
+    yofs = 0
     for i in range(-size/2, size/2 + 1, size/steps):
         fig.addline(-size/2+xofs, i+yofs, size/2+xofs, i+yofs)
     for i in range(-size/2, size/2 + 1, size/steps):
@@ -101,15 +101,44 @@ def setup1():
     s3.movea(90)
     time.sleep(10)
 
+def saftlabel():
+    scale = 0.3
+    spacing = 5
+    curr = -20
+    s = [[[20,40], [0,40], [0,20], [20,20], [20,0], [0,0]]]
+    a = [[[0,0], [0,40], [20,40], [20,0]], [[0,20], [20,20]]]
+    f = [[[0,0], [0,40], [20,40]], [[0,20], [20,20]]]
+    t = [[[10,0], [10,40]], [[-10,40], [30,40]]]
+    space = [[[0,0], [0,0]]]
+    to = [[[0,040], [20,40], [20,20], [0,20], [0,0], [20,0]]]
+    null = [[[0,0], [0,40], [20,40], [20,0], [0,0]]]
+    en = [[[5,30], [10,40], [10,0]]]
+
+    label = [[s, a, f, t], [to, null, en, en]]
+    for word in label:
+        for let in word:
+            for l in let:
+                for i in range(len(l) - 1):
+                    print l[i][0], l[i][1], l[i+1][0], l[i+1][1]
+                    fig.addline(-l[i][0]*scale-curr, -l[i][1]*scale
+                                , -l[i+1][0]*scale-curr, -l[i+1][1]*scale)
+            drawfig(fig)
+            fig.clear()
+            curr = curr + spacing + 20*scale
+        time.sleep(2)
+        curr = -20
+
 try:
+    saftlabel()
     #setup1()
-    demogrid()
+    #demogrid()
     #fig.clear()
     #demobox()
     #fig.clear()
     #democircle()
     #fig.clear()
     #demospiral()
+
     ser.close()
 except:
     ser.close()
